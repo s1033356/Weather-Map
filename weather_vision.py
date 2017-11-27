@@ -1,3 +1,4 @@
+#weather_map
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 from functools import partial
