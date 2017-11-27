@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Weather</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="UTF-8">
+
+    <style>
+        #map{
+            width:100%;
+            height:100%;
+        }
+        html,body{
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding:0;
+        }
+    </style>
+    <title>Title</title>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBAFhD72KkA8n5JEIz6RDXzzsxqTRdBsnM"></script>
+    <script src="https://code.jquery.com/jquery.js"></script>
+    <script src="/static/js/jquery.tinyMap.js"></script>
+    <script src="/static/js/jquery.tinyMap.min.js"></script>
+    <script>
+        function createMarkerIcon (text, color, opt) {
+        // 定義預設參數
+        var defaultOptions = {
+            'fontStyle': 'normal', // normal, bold, italic
+            'fontName': 'Arial',
+            'fontSize': 12, //以 pixel 為單位
+            'bgColor': color,
+            'fgColor': 'white',
+            'padding': 4,
+            'arrowHeight': 5 //下方尖角高度
+        };
+        options = $.extend(defaultOptions, opt);
+
+        // 建立 Canvas
+        var canvas = document.createElement('canvas'),
+            context = canvas.getContext('2d');
+        // 組合文字屬性 css string
+        var font = options.fontStyle + ' ' + options.fontSize + 'px ' +
+                   options.fontName;
+        context.font = font;
+        var metrics = context.measureText(text);
+        //文字大小加上 padding 作為外部尺寸
+        var w = metrics.width + options.padding * 2;
+        //高度以 font 的大小為準
+        var h = options.fontSize + options.padding * 2 +
+                options.arrowHeight;
+
+        canvas.width = w;
+        canvas.height = h;
+        // 邊框及背景
+        context.beginPath();
+        context.rect(0, 0, w, h - options.arrowHeight);
+        context.fillStyle = options.bgColor;
+        context.fill();
+        // 畫出下方尖角
+        context.beginPath();
+        var x = w / 2, y = h, arwSz = options.arrowHeight;
+        context.moveTo(x, y);
+        context.lineTo(x - arwSz, y - arwSz);
+        context.lineTo(x + arwSz, y - arwSz);
+        context.lineTo(x, y);
+        context.fill();
+        // 印出文字
+        context.textAlign = 'center';
+        context.fillStyle = options.fgColor;
+        context.font = font;
+        context.fillText(text, (w / 2), (h - options.arrowHeight) / 2 + options.padding);
+        // 傳回 DataURI 字串
+        return canvas.toDataURL();
+     }
+    function Google_map(){
+
+       /* var loc = [
+    	{
+			addr: ['25.0071463', '121.51574540000001'],
+			text: '福和店 新北市永和區福和路327號 02-29268708 09:30AM~10:00PM',
+			newLabel: '福和店',
+			newLabelCSS: 'labels'
+		},
+        {
+			addr: ['25.033981', '121.54326900000001'],
+			text: '大安店 台北市復興南路一段386號 02-27050608 10:00AM~09:30PM',
+			newLabel: '大安店',
+			newLabelCSS: 'labels'
+		},
+        {
+			addr: ['22.9777598', '120.22095480000007'],
+			text: '崇學店 台南市東區崇學路18號 06-2672988 09:30AM~10:00PM',
+            newLabel: '崇學店',
+			newLabelCSS: 'labels'
+		},
+        {
+			addr: ['23.564602', '120.30418699999996'],
+			text: '北港店 雲林縣北港鎮中山路18號 05-7834488 09:00AM~06:30PM',
+            newLabel: '北港店',
+			newLabelCSS: 'labels'
+		}
+	];*/
+        $('#map').tinyMap({
+            'center':{
+                'lat':24.970460,
+                'lng':121.267005
+            },
+            'zoom':16,
+            'autoLocation': function (loc) {
+                map.tinyMap('modify', {
+                    'marker': [{
+                        'addr': [
+                            loc.coords.latitude,
+                            loc.coords.longitude
+                        ]
+                    }]
+                });
+            }
+        });
+/*
+        $('#map').tinyMap({
+            center: {'lat':25.0071463,'lng':121.51574540000001},
+        //marker: loc,
+        zoom: 17,
+        autoLocation: function (pos) {
+            // 將目前位置記錄在元素內，供之後讀取（pos 會根據裝置位置自動更新）
+
+            //var loc = [pos.coords.latitude, pos.coords.longitude].join(',');
+            //$('#pos').text(loc);
+        }
+        });
+        */
+        $.get('/getmarker/',function(data){
+            var data = JSON.parse(data);
+            var mark = [];
+            for(i in data)
+            {
+                mark.push({'addr':[data[i]['addr'][0],data[i]['addr'][1]],'icon':{
+                'url': data[i]['icon']['url'],
+                'scaledSize': data[i]['icon']['scaledSize']
+            }});
+            }
+            var instance =$('#map').data('tinyMap');
+            $('#map').tinyMap('clear');
+            $('#map').tinyMap('modify',{
+                'markerCluster':true,
+                'marker':mark
+            });
+        });
+
+    }
+    $(function(){
+      window.setInterval('Google_map()',{{ time_refresh|safe }});
+    });
+
+    $(function pageLoad() {
+      Google_map();
+
+    });
+    </script>
+</body>
+</html>
